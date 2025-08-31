@@ -34,54 +34,54 @@ def define_scenes(cycle, goal_cycle_l, goal_cycle_r, duration = 50):
     nearest_play_on_l = []
     nearest_play_on_r = []
 
-    for goal in goal_cycle_l:
-        idx = bisect_left(cycle, goal)
+    for goal_l in goal_cycle_l:
+        idx = bisect_left(cycle, goal_l)
         if idx < len(cycle):
             nearest_play_on_l.append(cycle[idx-1])
         else:
             nearest_play_on_l.append(0)
 
-    for goal in goal_cycle_r:
-        idx = bisect_left(cycle, goal)
+    for goal_r in goal_cycle_r:
+        idx = bisect_left(cycle, goal_r)
         if idx < len(cycle):
             nearest_play_on_r.append(cycle[idx-1])
         else:
             nearest_play_on_r.append(0)
 
-    for i,(goal, playon) in enumerate(zip(goal_cycle_l, nearest_play_on_l)):
-        start_cycle = max(playon, goal - duration)
+    for i,(goal_l, playon) in enumerate(zip(goal_cycle_l, nearest_play_on_l)):
+        start_cycle = max(playon, goal_l - duration)
         scenes_l.append({
-            "name": f"goal_{i+1}_at_cycle_{goal}",
+            "name": f"goal_{i+1}_at_cycle_{goal_l-1}",
             "start_cycle": start_cycle,
-            "end_cycle": goal
+            "end_cycle": goal_l-1
         })
 
-    for i,(goal, playon) in enumerate(zip(goal_cycle_r, nearest_play_on_r)):
-        start_cycle = max(playon, goal - duration)
+    for i,(goal_r, playon) in enumerate(zip(goal_cycle_r, nearest_play_on_r)):
+        start_cycle = max(playon, goal_r - duration)
         scenes_r.append({
-            "name": f"goal_{i+1}_at_cycle_{goal}",
+            "name": f"goal_{i+1}_at_cycle_{goal_r-1}",
             "start_cycle": start_cycle,
-            "end_cycle": goal
+            "end_cycle": goal_r-1
         })
 
     return scenes_l, scenes_r
 
 def extract_data(file_path, scenes_l, scenes_r):
-    results_l = {scene['name']: [] for scene in scenes_l}
-    results_r = {scene['name']: [] for scene in scenes_r}
+    results_l = {scene_l['name']: [] for scene_l in scenes_l}
+    results_r = {scene_r['name']: [] for scene_r in scenes_r}
 
     with open(file_path, "r", encoding="utf-8") as f:
         for line in f:
             if not line.startswith('(show'):
                 continue
 
-            match_cycle = re.search(r'\(show(\d+)', line)
+            match_cycle = re.search(r'\(show\s+(\d+)', line)
             if not match_cycle:
                 continue
             current_cycle = int(match_cycle.group(1))
 
-            for scene in scenes_l:
-                if scene['start_cycle'] <= current_cycle <= scene['end_cycle']:
+            for scene_l in scenes_l:
+                if scene_l['start_cycle'] <= current_cycle <= scene_l['end_cycle']:
                     match_ball = re.search(r'\(\(b\) ([-\d\.]+) ([-\d\.]+)', line)
                     ball_x, ball_y = (float(p) for p in match_ball.groups()) if match_ball else (np.nan, np.nan)
 
@@ -100,11 +100,11 @@ def extract_data(file_path, scenes_l, scenes_r):
 
                     raw_data.extend(player_positions)
 
-                    results_l[scene['name']].append(raw_data)
+                    results_l[scene_l['name']].append(raw_data)
 
-            
-            for scene in scenes_r:
-                if scene['start_cycle'] <= current_cycle <= scene['end_cycle']:
+
+            for scene_r in scenes_r:
+                if scene_r['start_cycle'] <= current_cycle <= scene_r['end_cycle']:
                     match_ball = re.search(r'\(\(b\) ([-\d\.]+) ([-\d\.]+)', line)
                     ball_x, ball_y = (float(p) for p in match_ball.groups()) if match_ball else (np.nan, np.nan)
 
@@ -123,7 +123,7 @@ def extract_data(file_path, scenes_l, scenes_r):
 
                     raw_data.extend(player_positions)
 
-                    results_r[scene['name']].append(raw_data)
+                    results_r[scene_r['name']].append(raw_data)
 
     return results_l, results_r
 
