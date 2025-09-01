@@ -19,7 +19,7 @@ def main():
     padded_scenes = []
     for scene in all_scenes:
         if scene.shape[0] < 50:
-            padded_scene = np.pad(scene, ((50 - scene.shape[0], 0), (0, 0)), mode='constant')
+            padded_scene = np.pad(scene, ((0, 50 - scene.shape[0]), (0, 0)), mode='constant')
             padded_scenes.append(padded_scene)
         else:
             padded_scenes.append(scene)
