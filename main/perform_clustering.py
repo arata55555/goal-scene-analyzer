@@ -30,5 +30,10 @@ def main():
     scene_numpy = np.stack(padded_scenes, axis=0)
     print(f"データ形状: {scene_numpy.shape}")
 
+    ##もしscene_numpyの2つ以上シーンがない場合はデータの数が足りない
+    if scene_numpy.shape[0] < 2:
+        print("データの数が足りません")
+        return
+
 if __name__ == "__main__":
     main()
