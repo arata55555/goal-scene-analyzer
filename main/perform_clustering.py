@@ -35,5 +35,15 @@ def main():
         print("データの数が足りません")
         return
 
+    ##クラスタ数を定義する．
+    n_clusters = min(10, scene_numpy.shape[0])
+
+    model = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw", verbose=True, random_state=42)
+    model.fit(scene_numpy)
+
+    model_output_path = '/home/arata/rcss/goal-scene-analyzer/data/processed/scoring_model.pkl'
+    joblib.dump(model, model_output_path)
+    print(f"学習済みモデルを {model_output_path} に保存")
+
 if __name__ == "__main__":
     main()
