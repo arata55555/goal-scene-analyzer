@@ -1,6 +1,7 @@
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 def main():
     model = joblib.load('/home/arata/rcss/goal-scene-analyzer/data/processed/scoring_model.pkl')
@@ -10,8 +11,15 @@ def main():
     except FileNotFoundError:
         print("モデルファイルが見つかりません")
         return
+    
+    output_dir = '/home/arata/rcss/goal-scene-analyzer/data/results/templates/'
 
-def visualize_template(template_data):
+    for i, template in enumerate(templates):
+        output_path = os.path.join(output_dir, f'template_{i}.png')
+        visualize_template(template, output_path)
+    print("すべてのテンプレートの可視化が完了しました。")
+
+def visualize_template(template_data, output_path):
     reshaped_data = template_data.reshape(50, 23, 2)
     
     fig, ax = plt.subplots(figsize=(12, 8))
