@@ -88,7 +88,7 @@ def extract_data(file_path, scenes_l, scenes_r):
                     raw_data = [ball_x, ball_y]
                     player_positions = [np.nan] * 44
 
-                    players_found = re.findall(r'\(\(([lr])\s+(\d+)\)[^)]*?\s([-\d\.]+)\s+([-\d\.]+)', line)
+                    players_found = re.findall(r'\(\(([lr])\s+(\d+)\)\s+\S+\s+\S+\s+([-\d\.]+)\s+([-\d\.]+)', line)
                     for team, unum, x, y in players_found:
                         unum = int(unum)
                         x, y = float(x), float(y)
@@ -102,6 +102,7 @@ def extract_data(file_path, scenes_l, scenes_r):
 
                     results_l[scene_l['name']].append(raw_data)
 
+                    break
 
             for scene_r in scenes_r:
                 if scene_r['start_cycle'] <= current_cycle <= scene_r['end_cycle']:
@@ -111,7 +112,7 @@ def extract_data(file_path, scenes_l, scenes_r):
                     raw_data = [ball_x, ball_y]
                     player_positions = [np.nan] * 44
 
-                    players_found = re.findall(r'\(\(([lr])\s+(\d+)\)[^)]*?\s([-\d\.]+)\s+([-\d\.]+)', line)
+                    players_found = re.findall(r'\(\(([lr])\s+(\d+)\)\s+\S+\s+\S+\s+([-\d\.]+)\s+([-\d\.]+)', line)
                     for team, unum, x, y in players_found:
                         unum = int(unum)
                         x, y = float(x), float(y)
@@ -125,6 +126,8 @@ def extract_data(file_path, scenes_l, scenes_r):
 
                     results_r[scene_r['name']].append(raw_data)
 
+                    break
+                
     return results_l, results_r
 
 def main():
