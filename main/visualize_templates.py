@@ -20,8 +20,10 @@ def main():
     print("すべてのテンプレートの可視化が完了しました。")
 
 def visualize_template(template_data, output_path):
-    reshaped_data = template_data.reshape(50, 23, 2)
-    
+    n_timesteps = template_data.shape[0]
+
+    reshaped_data = template_data.reshape(n_timesteps, 23, 2)
+
     fig, ax = plt.subplots(figsize=(12, 8))
     ax.plot([-52.5, 52.5, 52.5, -52.5, -52.5], [-34, -34, 34, 34, -34], color="gray")
 
