@@ -205,3 +205,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# 数字で始まるログ・一時ファイル
+2025*
+
+# 学習済みモデルなど
+scoring_model*
+
+# ゴールシーン関連ファイル
+final_goal_scene*
+
+# テンプレート画像
+template_*.png
