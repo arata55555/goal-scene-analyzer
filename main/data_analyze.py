@@ -2,31 +2,13 @@ import re
 from bisect import bisect_left
 import numpy as np
 import os
+import gzip
 
-rcg_file_path = "/home/arata/rcss/goal-scene-analyzer/data/logs/20250403061521-HELIOS_base_4-vs-Mars_1.rcg"
+rcg_folder_path = "/home/arata/rcss/goal-scene-analyzer/data/goal-scene-analyzer_test/"
 CYCLES_BEFORE_GOAL = 50  
 OUTPUT_FILENAME_L = "final_goal_scenes_data_l.npz"
 OUTPUT_FILENAME_R = "final_goal_scenes_data_r.npz"
 npz_folder_path = "/home/arata/rcss/goal-scene-analyzer/data/results"
-
-cycle = []
-goal_cycle_l = []
-goal_cycle_r = []
-
-with open(rcg_file_path, "r", encoding="utf-8") as f:
-    for line in f:
-        match = re.search(r"(\d+)\s+play_on", line)
-        if match:
-            cycle.append(int(match.group(1)))
-
-
-        goal_match_l = re.search(r"(\d+)\s+goal_l", line)
-        if goal_match_l:
-            goal_cycle_l.append(int(goal_match_l.group(1)))
-
-        goal_match_r = re.search(r"(\d+)\s+goal_r", line)
-        if goal_match_r:
-            goal_cycle_r.append(int(goal_match_r.group(1)))
 
 def define_scenes(cycle, goal_cycle_l, goal_cycle_r, duration = 50):
     scenes_l = []
@@ -70,7 +52,7 @@ def extract_data(file_path, scenes_l, scenes_r):
     results_l = {scene_l['name']: [] for scene_l in scenes_l}
     results_r = {scene_r['name']: [] for scene_r in scenes_r}
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with gzip.open(file_path, "rt", encoding="utf-8") as f:
         for line in f:
             if not line.startswith('(show'):
                 continue
@@ -131,32 +113,66 @@ def extract_data(file_path, scenes_l, scenes_r):
     return results_l, results_r
 
 def main():
-    print(f"処理を開始: {rcg_file_path}")
-    
-    scenes_l, scenes_r = define_scenes(cycle, goal_cycle_l, goal_cycle_r, CYCLES_BEFORE_GOAL)
+    all_data_l = []
+    all_data_r = []
 
-    if not scenes_l and not scenes_r:
-        print("ゴールシーンが見つからなかったため、処理を終了します。")
+    if not os.path.isdir(rcg_folder_path):
+        print(f"エラー: 指定されたフォルダが見つかりません: {rcg_folder_path}")
         return
+    for filename in os.listdir(rcg_folder_path):
+        rcg_file_path = os.path.join(rcg_folder_path, filename)
+        if not filename.endswith(".rcg.gz"):
+            continue
 
-    print(f"{len(scenes_l)}個のゴールシーンを特定しました。データ抽出を開始")
+        cycle = []
+        goal_cycle_l = []
+        goal_cycle_r = []
+        with gzip.open(rcg_file_path, "rt", encoding="utf-8") as f:
+            for line in f:
+                match = re.search(r"(\d+)\s+play_on", line)
+                if match: cycle.append(int(match.group(1)))
+                goal_match_l = re.search(r"(\d+)\s+goal_l", line)
+                if goal_match_l:
+                    goal_cycle_l.append(int(goal_match_l.group(1)))
 
-    extracted_data_l, extracted_data_r = extract_data(rcg_file_path, scenes_l, scenes_r)
+                goal_match_r = re.search(r"(\d+)\s+goal_r", line)
+                if goal_match_r:
+                    goal_cycle_r.append(int(goal_match_r.group(1)))    
 
-    for name, data_list in extracted_data_l.items():
-        extracted_data_l[name] = np.array(data_list)
-    for name, data_list in extracted_data_r.items():
-        extracted_data_r[name] = np.array(data_list)
+        print(f"処理を開始: {rcg_file_path}")
+        
+        scenes_l, scenes_r = define_scenes(cycle, goal_cycle_l, goal_cycle_r, CYCLES_BEFORE_GOAL)
 
-    if extracted_data_l:
-        output_path_l = os.path.join(npz_folder_path, OUTPUT_FILENAME_L)
-        np.savez_compressed(output_path_l, **extracted_data_l)
-        print(f"左チームのゴールデータを {output_path_l} に保存しました。")
+        if not scenes_l and not scenes_r:
+            print("ゴールシーンが見つからなかったため、処理を終了します。")
+            continue
 
-    if extracted_data_r:
-        output_path_r = os.path.join(npz_folder_path, OUTPUT_FILENAME_R)
-        np.savez_compressed(output_path_r, **extracted_data_r)
-        print(f"右チームのゴールデータを {output_path_r} に保存しました。")
+        print(f"{len(scenes_l)}個のゴールシーンを特定しました。データ抽出を開始")
+
+        extracted_data_l, extracted_data_r = extract_data(rcg_file_path, scenes_l, scenes_r)
+
+        for name, data_list in extracted_data_l.items():
+            extracted_data_l[name] = np.array(data_list)
+        for name, data_list in extracted_data_r.items():
+            extracted_data_r[name] = np.array(data_list)
+
+        if extracted_data_l:
+            print(f"左チームの{len(extracted_data_l)}個のゴールデータを処理中...")
+            for scene_data_list in extracted_data_l.values():
+                all_data_l.append(scene_data_list)
+
+        if extracted_data_r:
+            print(f"右チームの{len(extracted_data_r)}個のゴールデータを処理中...")
+            for scene_data_list in extracted_data_r.values():
+                all_data_r.append(scene_data_list)
+    if all_data_l:
+        all_data_l = np.vstack(all_data_l)
+        np.savez_compressed(os.path.join(npz_folder_path, OUTPUT_FILENAME_L), all_data_l)
+        print(f"左チームのデータを{OUTPUT_FILENAME_L}に保存しました。")
+    if all_data_r:
+        all_data_r = np.vstack(all_data_r)
+        np.savez_compressed(os.path.join(npz_folder_path, OUTPUT_FILENAME_R), all_data_r)
+        print(f"右チームのデータを{OUTPUT_FILENAME_R}に保存しました。")
 
 if __name__ == "__main__":
     main()
