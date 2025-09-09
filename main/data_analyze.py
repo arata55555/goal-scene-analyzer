@@ -112,6 +112,20 @@ def extract_data(file_path, scenes_l, scenes_r):
                 
     return results_l, results_r
 
+def padded_data(scenes: list, target_len: int) -> np.ndarray:
+    padded_scenes = []
+    for scene in scenes:
+        if scene.shape[0] < target_len:
+            padded_scene = np.pad(scene, ((0, target_len - scene.shape[0]), (0, 0)), mode='edge')
+            padded_scenes.append(padded_scene)
+        else:
+            padded_scenes.append(scene)
+
+    for i, scene in enumerate(padded_scenes):
+        print(f"scene {i} shape: {scene.shape}")
+
+    return np.stack(padded_scenes, axis=0)
+
 def main():
     all_data_l = []
     all_data_r = []
@@ -151,10 +165,10 @@ def main():
 
         extracted_data_l, extracted_data_r = extract_data(rcg_file_path, scenes_l, scenes_r)
 
-        for name, data_list in extracted_data_l.items():
-            extracted_data_l[name] = np.array(data_list)
-        for name, data_list in extracted_data_r.items():
-            extracted_data_r[name] = np.array(data_list)
+        if extracted_data_l:
+            all_data_l.extend(list(extracted_data_l.values()))
+        if extracted_data_r:
+            all_data_r.extend(list(extracted_data_r.values()))
 
         if extracted_data_l:
             print(f"左チームの{len(extracted_data_l)}個のゴールデータを処理中...")
@@ -166,13 +180,17 @@ def main():
             for scene_data_list in extracted_data_r.values():
                 all_data_r.append(scene_data_list)
     if all_data_l:
-        all_data_l = np.vstack(all_data_l)
-        np.savez_compressed(os.path.join(npz_folder_path, OUTPUT_FILENAME_L), all_data_l)
-        print(f"左チームのデータを{OUTPUT_FILENAME_L}に保存しました。")
-    if all_data_r:
-        all_data_r = np.vstack(all_data_r)
-        np.savez_compressed(os.path.join(npz_folder_path, OUTPUT_FILENAME_R), all_data_r)
-        print(f"右チームのデータを{OUTPUT_FILENAME_R}に保存しました。")
+        scoring_scenes_numpy = padded_data(all_data_l, CYCLES_BEFORE_GOAL)
+        scoring_scenes_numpy = np.nan_to_num(scoring_scenes_numpy, nan=0.0)
+        output_path_l = os.path.join(npz_folder_path, "scoring_scenes.npy")
+        np.save(output_path_l, scoring_scenes_numpy)
+        print(f"全得点シーン {scoring_scenes_numpy.shape[0]}件を {output_path_l} に保存しました。")
 
+    if all_data_r:
+        concession_scenes_numpy = padded_data(all_data_r, CYCLES_BEFORE_GOAL)
+        concession_scenes_numpy = np.nan_to_num(concession_scenes_numpy, nan=0.0)
+        output_path_r = os.path.join(npz_folder_path, "concession_scenes.npy")
+        np.save(output_path_r, concession_scenes_numpy)
+        print(f"全失点シーン {concession_scenes_numpy.shape[0]}件を {output_path_r} に保存しました。")
 if __name__ == "__main__":
     main()
