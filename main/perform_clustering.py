@@ -5,29 +5,19 @@ from tslearn.clustering import TimeSeriesKMeans
 def main():
     print("クラスタリング開始")
 
-    npz_path = "/home/arata/rcss/goal-scene-analyzer/data/results/final_goal_scenes_data_l.npz"
+    npy_path = "/home/arata/rcss/goal-scene-analyzer/data/results/scoring_scenes.npy"
     try:
-        loaded_npz = np.load(npz_path)
+        loaded_npy = np.load(npy_path)
     except FileNotFoundError:
-        print(f"ファイルが見つかりません: {npz_path}")
+        print(f"ファイルが見つかりません: {npy_path}")
         return
 
-    all_scenes = []
-    for scene_name in loaded_npz.keys():
-        all_scenes.append(loaded_npz[scene_name])
+    all_scenes = loaded_npy  
 
-    padded_scenes = []
-    for scene in all_scenes:
-        if scene.shape[0] < 50:
-            padded_scene = np.pad(scene, ((0, 50 - scene.shape[0]), (0, 0)), mode='edge')
-            padded_scenes.append(padded_scene)
-        else:
-            padded_scenes.append(scene)
-
-    for i, scene in enumerate(padded_scenes):
+    for i, scene in enumerate(all_scenes):
         print(f"scene {i} shape: {scene.shape}")
 
-    scene_numpy = np.stack(padded_scenes, axis=0)
+    scene_numpy = np.stack(all_scenes, axis=0)
     print(f"データ形状: {scene_numpy.shape}")
 
     ##もしscene_numpyの2つ以上シーンがない場合はデータの数が足りない
