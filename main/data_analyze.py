@@ -115,9 +115,14 @@ def extract_data(file_path, scenes_l, scenes_r):
 def padded_data(scenes: list, target_len: int) -> np.ndarray:
     padded_scenes = []
     for scene in scenes:
+        if isinstance(scene, list):
+            scene = np.array(scene)
         if scene.shape[0] < target_len:
             padded_scene = np.pad(scene, ((0, target_len - scene.shape[0]), (0, 0)), mode='edge')
             padded_scenes.append(padded_scene)
+        elif scene.shape[0] > target_len:
+            trimmed_scene = scene[-target_len:, :]
+            padded_scenes.append(trimmed_scene)
         else:
             padded_scenes.append(scene)
 
