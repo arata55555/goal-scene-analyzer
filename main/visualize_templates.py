@@ -5,18 +5,26 @@ import numpy as np
 import os
 
 def main():
-    model = joblib.load('/home/arata/rcss/goal-scene-analyzer/data/finish/09-18/scoringk=4/scoring_model.pkl')
+    model = joblib.load('/home/arata/rcss/goal-scene-analyzer/data/processed/scoring_model.pkl')
+    pkl_path = "/home/arata/rcss/goal-scene-analyzer/data/results/concession_scenes.pkl"
     try:
-        templates = model.cluster_centers_
-        print(f"テンプレート数: {len(templates)}")
+        all_scenes = joblib.load(pkl_path)
     except FileNotFoundError:
+        print(f"ファイルが見つかりません: {pkl_path}")
+        return
+    try:
+        medoid_indices = model.medoid_indices_
+        templates = [all_scenes[i] for i in medoid_indices]
+        print(f"テンプレート数: {len(templates)}")
+    except (AttributeError, FileNotFoundError):
         print("モデルファイルが見つかりません")
         return
     
     output_dir = '/home/arata/rcss/goal-scene-analyzer/data/results/templates/'
 
     for i, template in enumerate(templates):
-        output_path = os.path.join(output_dir, f'template_{i}.png')
+        original_index = medoid_indices[i]
+        output_path = os.path.join(output_dir, f'template_{i}_{original_index}.png')
         visualize_template(template, output_path)
     print("すべてのテンプレートの可視化が完了しました")
 
