@@ -1,35 +1,44 @@
 import numpy as np
 import joblib
-from tslearn.clustering import TimeSeriesKMeans
+# from tslearn.clustering import TimeSeriesKMeans
+from tslearn.metrics import cdist_dtw
+from sklearn_extra.cluster import KMedoids
 
 def main():
     print("クラスタリング開始")
 
-    npy_path ="/home/arata/rcss/goal-scene-analyzer/data/finish/09-11/concession_scenes.npy"
+    pkl_path ="/home/arata/rcss/goal-scene-analyzer/data/results/concession_scenes.pkl"
     try:
-        loaded_npy = np.load(npy_path)
+        loaded_pkl = joblib.load(pkl_path)
     except FileNotFoundError:
-        print(f"ファイルが見つかりません: {npy_path}")
+        print(f"ファイルが見つかりません: {pkl_path}")
         return
 
-    all_scenes = loaded_npy  
+    all_scenes = loaded_pkl 
 
     for i, scene in enumerate(all_scenes):
         print(f"scene {i} shape: {scene.shape}")
 
-    scene_numpy = np.stack(all_scenes, axis=0)
-    print(f"データ形状: {scene_numpy.shape}")
+    # scene_numpy = np.stack(all_scenes, axis=0)
+    print(f"データ形状: {len(all_scenes)}個のシーン")
 
     ##もしscene_numpyの2つ以上シーンがない場合はデータの数が足りない
-    if scene_numpy.shape[0] < 2:
+    if len(all_scenes) < 2:
         print("データの数が足りません")
         return
+    
+    # DTWを行う
+    print("DTWを実行中...")
+    dtw_distances = cdist_dtw(all_scenes, n_jobs=-1, verbose=True)
+    print("DTW距離行列を計算しました")
 
     ##クラスタ数を定義する．
-    n_clusters = min(6, scene_numpy.shape[0])
+    n_clusters = min(4, len(all_scenes))
 
-    model = TimeSeriesKMeans(n_clusters=n_clusters, metric="dtw", verbose=True, random_state=42, n_jobs=-1)
-    model.fit(scene_numpy)
+    model = KMedoids(n_clusters=n_clusters, metric="precomputed", init='k-medoids++', random_state=42)
+    print("クラスタリングを実行中...")
+    model.fit(dtw_distances)
+    print("クラスタリングが完了しました")
 
     labels = model.labels_
     cluster_ids, counts = np.unique(labels, return_counts=True)
@@ -38,7 +47,7 @@ def main():
     for i in sorted_indices:
         cluster_id = cluster_ids[i]
         count = counts[i]
-        percentage = (count / scene_numpy.shape[0]) * 100
+        percentage = (count / len(all_scenes)) * 100
         print(f"クラスタ {cluster_id}: {count} 個のシーン, 全体の {percentage:.2f}%")
 
     model_output_path = '/home/arata/rcss/goal-scene-analyzer/data/processed/scoring_model.pkl'
