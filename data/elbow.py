@@ -1,9 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from tslearn.clustering import TimeSeriesKMeans
+import joblib
+# from tslearn.clustering import TimeSeriesKMeans
+from tslearn.metrics import cdist_dtw
+from sklearn_extra.cluster import KMedoids
 import os
 
-INPUT_NPY_PATH = "/home/arata/rcss/goal-scene-analyzer/data/finish/09-11/concession_scenes.npy"
+INPUT_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/data/results/scoring_scenes.pkl"
 OUTPUT_DIR = "/home/arata/rcss/goal-scene-analyzer/data/processed/"
 
 K_RANGE = range(3, 21)
@@ -11,18 +14,20 @@ K_RANGE = range(3, 21)
 def main ():
     print("---エルボー法開始---")
     try:
-        all_scenes = np.load(INPUT_NPY_PATH)
-        print (f"データを読み込みました．形状: {all_scenes.shape}")
+        all_scenes = joblib.load(INPUT_PKL_PATH)
+        print (f"データを読み込みました．形状: {len(all_scenes)}")
     except FileNotFoundError:
-        print(f"ファイルが見つかりません: {INPUT_NPY_PATH}")
+        print(f"ファイルが見つかりません: {INPUT_PKL_PATH}")
         return
+    
+    dtw_distances = cdist_dtw(all_scenes, n_jobs=-1, verbose=True)
+    print("DTW距離行列を計算しました")
     
     rist = []
     for k in K_RANGE:
         print(f"k = {k} の場合でクラスタリングを実行中...")
-        model = TimeSeriesKMeans(n_clusters=k, metric="dtw", verbose=True, random_state=42, n_jobs=-1, max_iter=5)
-
-        model.fit(all_scenes)
+        model = KMedoids(n_clusters=k, metric="precomputed", init='k-medoids++', random_state=42)
+        model.fit(dtw_distances)
 
         rist.append(model.inertia_)
         print(f"k = {k} の場合のinertia: {model.inertia_}")
