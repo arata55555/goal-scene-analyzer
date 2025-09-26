@@ -3,6 +3,7 @@ from bisect import bisect_left
 import numpy as np
 import os
 import gzip
+import joblib
 
 rcg_folder_path = "/home/arata/rcss/goal-scene-analyzer/data/goal-scene-analyzer_test/"
 CYCLES_BEFORE_GOAL = 50  
@@ -112,24 +113,24 @@ def extract_data(file_path, scenes_l, scenes_r):
                 
     return results_l, results_r
 
-def padded_data(scenes: list, target_len: int) -> np.ndarray:
-    padded_scenes = []
-    for scene in scenes:
-        if isinstance(scene, list):
-            scene = np.array(scene)
-        if scene.shape[0] < target_len:
-            padded_scene = np.pad(scene, ((0, target_len - scene.shape[0]), (0, 0)), mode='edge')
-            padded_scenes.append(padded_scene)
-        elif scene.shape[0] > target_len:
-            trimmed_scene = scene[-target_len:, :]
-            padded_scenes.append(trimmed_scene)
-        else:
-            padded_scenes.append(scene)
+# def padded_data(scenes: list, target_len: int) -> np.ndarray:
+#     padded_scenes = []
+#     for scene in scenes:
+#         if isinstance(scene, list):
+#             scene = np.array(scene)
+#         if scene.shape[0] < target_len:
+#             padded_scene = np.pad(scene, ((0, target_len - scene.shape[0]), (0, 0)), mode='edge')
+#             padded_scenes.append(padded_scene)
+#         elif scene.shape[0] > target_len:
+#             trimmed_scene = scene[-target_len:, :]
+#             padded_scenes.append(trimmed_scene)
+#         else:
+#             padded_scenes.append(scene)
 
-    for i, scene in enumerate(padded_scenes):
-        print(f"scene {i} shape: {scene.shape}")
+#     for i, scene in enumerate(padded_scenes):
+#         print(f"scene {i} shape: {scene.shape}")
 
-    return np.stack(padded_scenes, axis=0)
+#     return np.stack(padded_scenes, axis=0)
 
 def main():
     all_data_l = []
@@ -185,17 +186,17 @@ def main():
             for scene_data_list in extracted_data_r.values():
                 all_data_r.append(scene_data_list)
     if all_data_l:
-        scoring_scenes_numpy = padded_data(all_data_l, CYCLES_BEFORE_GOAL)
-        scoring_scenes_numpy = np.nan_to_num(scoring_scenes_numpy, nan=0.0)
-        output_path_l = os.path.join(npz_folder_path, "scoring_scenes.npy")
-        np.save(output_path_l, scoring_scenes_numpy)
-        print(f"全得点シーン {scoring_scenes_numpy.shape[0]}件を {output_path_l} に保存しました。")
+        # scoring_scenes_numpy = padded_data(all_data_l, CYCLES_BEFORE_GOAL)
+        scoring_scenes_numpy = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_l if scene]
+        output_path_l = os.path.join(npz_folder_path, "scoring_scenes.pkl")
+        joblib.dump(scoring_scenes_numpy, output_path_l)
+        print(f"全得点シーン {len(scoring_scenes_numpy)}件を {output_path_l} に保存しました。")
 
     if all_data_r:
-        concession_scenes_numpy = padded_data(all_data_r, CYCLES_BEFORE_GOAL)
-        concession_scenes_numpy = np.nan_to_num(concession_scenes_numpy, nan=0.0)
-        output_path_r = os.path.join(npz_folder_path, "concession_scenes.npy")
-        np.save(output_path_r, concession_scenes_numpy)
-        print(f"全失点シーン {concession_scenes_numpy.shape[0]}件を {output_path_r} に保存しました。")
+        # concession_scenes_numpy = padded_data(all_data_r, CYCLES_BEFORE_GOAL)
+        concession_scenes_numpy = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_r if scene]
+        output_path_r = os.path.join(npz_folder_path, "concession_scenes.pkl")
+        joblib.dump(concession_scenes_numpy, output_path_r)
+        print(f"全失点シーン {len(concession_scenes_numpy)}件を {output_path_r} に保存しました。")
 if __name__ == "__main__":
     main()
