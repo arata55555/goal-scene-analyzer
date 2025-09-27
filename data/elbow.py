@@ -19,7 +19,7 @@ def main ():
     except FileNotFoundError:
         print(f"ファイルが見つかりません: {INPUT_PKL_PATH}")
         return
-    
+
     dtw_distances = cdist_dtw(all_scenes, n_jobs=-1, verbose=True)
     print("DTW距離行列を計算しました")
     
@@ -36,14 +36,14 @@ def main ():
     plt.figure(figsize=(12, 7))
     plt.plot(K_RANGE, rist, marker='o', linestyle='-')
 
-    plt.title("エルボー法による最適クラスタ数の推定")
-    plt.xlabel("クラスタ数 (k)")
+    plt.title("Elbow Method for Optimal k")
+    plt.xlabel("klusters (k)")
     plt.ylabel("Inertia")
     plt.xticks(K_RANGE)
     plt.grid(True)
 
     output_dir = os.path.dirname(OUTPUT_DIR)
-    output_graph_path = os.path.join(output_dir, "elbow_method.png")
+    output_graph_path = os.path.join(output_dir, "elbow_method_scoring.png")
     plt.savefig(output_graph_path)
     print(f"グラフを保存しました: {output_graph_path}")
 
