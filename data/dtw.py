@@ -2,8 +2,16 @@ import numpy as np
 import joblib
 from tslearn.metrics import cdist_dtw
 
-INPUT_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/data/finish/09-26/scoring_scenes.pkl"
-OUTPUT_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/data/processed/dtw_distances_scoring.pkl"
+INPUT_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/data/finish/09-26/concession_scenes.pkl"
+OUTPUT_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/data/processed/dtw_distances_concession_ball_3.pkl"
+
+DIM = 46
+
+def build_scale_vector():
+    w = np.ones(DIM)
+    w[0:2] *= 3.0
+    return np.sqrt(w)
+
 def main():
     print("DTWの計算を開始します")
     try:
@@ -13,7 +21,12 @@ def main():
         print(f"ファイルが見つかりません: {INPUT_PKL_PATH}")
         return
     
-    dtw_distances = cdist_dtw(all_scenes, n_jobs=-1, verbose=True)
+    X = [np.nan_to_num(np.asarray(s, float), nan=0.0) for s in all_scenes]
+
+    scale = build_scale_vector()
+    Xw = [s * scale for s in X]
+
+    dtw_distances = cdist_dtw(Xw, n_jobs=-1, verbose=True)
     print("DTW距離行列を計算しました")
 
     joblib.dump(dtw_distances, OUTPUT_PKL_PATH)
