@@ -217,3 +217,8 @@ final_goal_scene*
 
 # テンプレート画像
 template_*.png
+elbow_method.png
+nohup.out
+*.png
+*.pkl
+*.npy
