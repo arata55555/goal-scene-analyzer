@@ -5,6 +5,7 @@ import os
 
 
 INPUT_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/data/finish/09-26/concession_scenes.pkl"
+INPUT_PKL_PATH_2024 = "/home/arata/rcss/goal-scene-analyzer/data/finish/2024-06/concession_scenes_2024.pkl"
 OUTPUT_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/data/processed/"
 
 DIM = 46
@@ -39,15 +40,29 @@ def build_scale_vector(scenes, ball_weights, falloff_rates):
 def main():
     print("DTWの計算を開始します")
     try:
-        all_scenes = joblib.load(INPUT_PKL_PATH)
-        print(f"データを読み込みました．形状: {len(all_scenes)}")
+        sub_scenes = joblib.load(INPUT_PKL_PATH)
+        print(f"データを読み込みました.形状: {len(sub_scenes)} ")
     except FileNotFoundError:
         print(f"ファイルが見つかりません: {INPUT_PKL_PATH}")
         return
+    try:
+        sub_scenes_2024 = joblib.load(INPUT_PKL_PATH_2024)
+        print(f"2024データを読み込みました.形状: {len(sub_scenes_2024)} ")
+    except FileNotFoundError:
+        print(f"ファイルが見つかりません: {INPUT_PKL_PATH_2024}")
+        return
+    
+    all_scenes = sub_scenes + sub_scenes_2024
+
+    if not all_scenes:
+        print("シーンデータが空です。処理を終了します。")
+        return
+    
+    print(f"総シーン数: {len(all_scenes)}")
     
     X = [np.nan_to_num(np.asarray(s, float), nan=0.0) for s in all_scenes]
 
-    ball_weights = [1.0, 3.0, 5.0, 7.0, 10.0, 15.0]
+    ball_weights = [15.0, 16.0, 17.0, 18.0, 19.0, 20.0]
     falloff_rates = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
     for bl in ball_weights:
