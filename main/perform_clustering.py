@@ -13,7 +13,7 @@ import matplotlib.cm as cm
 def main():
     print("クラスタリング開始")
 
-    pkl_path ="/home/arata/rcss/goal-scene-analyzer/data/processed/dtw_distances_concession.pkl"
+    pkl_path ="/home/arata/rcss/goal-scene-analyzer/data/finish/10-14/ball_x15_falloff_x0p1/dtw_distances_concession_ball_x15_falloff_x0p1.pkl"
     try:
         loaded_pkl = joblib.load(pkl_path)
     except FileNotFoundError:
@@ -60,10 +60,10 @@ def main():
         percentage = (count / len(loaded_pkl)) * 100
         print(f"クラスタ {cluster_id}: {count} 個のシーン, 全体の {percentage:.2f}%")
 
-    # processed_dir = Path('/home/arata/rcss/goal-scene-analyzer/data/processed')
-    # model_output_path = processed_dir / 'concession_model_re.pkl'
-    # joblib.dump(model, model_output_path)
-    # print(f"学習済みモデルを {model_output_path} に保存")
+    processed_dir = Path('/home/arata/rcss/goal-scene-analyzer/data/processed')
+    model_output_path = processed_dir / 'concession_model_ball_x15_falloff_x0p1.pkl'
+    joblib.dump(model, model_output_path)
+    print(f"学習済みモデルを {model_output_path} に保存")
 
     # それぞれのクラスタに対してさらにクラスタリングを実行
     for cluster_id in cluster_ids:
@@ -82,60 +82,112 @@ def main():
 
         sub_distance_matrix = loaded_pkl[np.ix_(cluster_indices, cluster_indices)]
 
-        for k in K_RANGE:
-            print(f"k = {k}の場合のシルエットスコアを計算中...")
-            model = KMedoids(n_clusters=k, metric="precomputed", init='k-medoids++', random_state=42)
-            model.fit(sub_distance_matrix)
-            label = model.labels_
-            silhouette_vals = silhouette_samples(sub_distance_matrix, label, metric="precomputed")
+        if cluster_id == 0:
+            sub_n_clusters = 2
+        elif cluster_id == 1:
+            sub_n_clusters = 2
+        else:
+            sub_n_clusters = 3
 
-            plt.figure(figsize=(10, 8))
-            y_ax_lower, y_ax_upper = 0, 0
-            y_ticks = []
-            cluster_labels = np.unique(label)
-            n_clusters = len(cluster_labels)
-            for i, c in enumerate(cluster_labels):
-                c_silhouette_vals = silhouette_vals[label == c]
-                c_silhouette_vals.sort()
-                y_ax_upper += len(c_silhouette_vals)
-                color = cm.jet(float(i) / n_clusters)
-                plt.barh(range(y_ax_lower, y_ax_upper), c_silhouette_vals, height=1.0, edgecolor='none', color=color)
-                y_ticks.append((y_ax_lower + y_ax_upper) / 2)
-                y_ax_lower += len(c_silhouette_vals)
+        # for k in K_RANGE:
+        #     print(f"k = {k}の場合のシルエットスコアを計算中...")
+        #     model = KMedoids(n_clusters=k, metric="precomputed", init='k-medoids++', random_state=42)
+        #     model.fit(sub_distance_matrix)
+        #     label = model.labels_
+        #     silhouette_vals = silhouette_samples(sub_distance_matrix, label, metric="precomputed")
 
-            silhouette_avg = np.mean(silhouette_vals)
-            plt.axvline(silhouette_avg, color="red", linestyle="--")
-            plt.yticks(y_ticks, cluster_labels)
-            plt.title(f"Silhouette plot (k={k}, avg={silhouette_avg:.4f})")
-            plt.xlabel("Silhouette Score")
-            plt.ylabel("Cluster")
-            print(f"k = {k}のシルエットスコアの平均: {silhouette_avg:.4f}")
+        #     plt.figure(figsize=(10, 8))
+        #     y_ax_lower, y_ax_upper = 0, 0
+        #     y_ticks = []
+        #     cluster_labels = np.unique(label)
+        #     n_clusters = len(cluster_labels)
+        #     for i, c in enumerate(cluster_labels):
+        #         c_silhouette_vals = silhouette_vals[label == c]
+        #         c_silhouette_vals.sort()
+        #         y_ax_upper += len(c_silhouette_vals)
+        #         color = cm.jet(float(i) / n_clusters)
+        #         plt.barh(range(y_ax_lower, y_ax_upper), c_silhouette_vals, height=1.0, edgecolor='none', color=color)
+        #         y_ticks.append((y_ax_lower + y_ax_upper) / 2)
+        #         y_ax_lower += len(c_silhouette_vals)
 
-            output_path = os.path.join(OUTPUT_DIR, f"silhouette_plot_{cluster_id}_k{k}.png")
-            plt.savefig(output_path)
-            plt.close()
-            print(f"グラフを保存しました: {output_path}")
+        #     silhouette_avg = np.mean(silhouette_vals)
+        #     plt.axvline(silhouette_avg, color="red", linestyle="--")
+        #     plt.yticks(y_ticks, cluster_labels)
+        #     plt.title(f"Silhouette plot (k={k}, avg={silhouette_avg:.4f})")
+        #     plt.xlabel("Silhouette Score")
+        #     plt.ylabel("Cluster")
+        #     print(f"k = {k}のシルエットスコアの平均: {silhouette_avg:.4f}")
 
-        # sub_model = KMedoids(n_clusters=sub_n_clusters, metric="precomputed", init='k-medoids++', random_state=42)
-        # print(f"  -> サブクラスタリング (クラスタ数 {sub_n_clusters}) を実行中...")
-        # sub_model.fit(sub_distance_matrix)
+        #     output_path = os.path.join(OUTPUT_DIR, f"silhouette_plot_{cluster_id}_k{k}.png")
+        #     plt.savefig(output_path)
+        #     plt.close()
+        #     print(f"グラフを保存しました: {output_path}")
 
-        # sub_labels = sub_model.labels_
-        # sub_cluster_ids, sub_counts = np.unique(sub_labels, return_counts=True)
-        # sub_sorted_indices = np.argsort(-sub_counts)
-        # for idx in sub_sorted_indices:
-        #     sub_cluster_id = int(sub_cluster_ids[idx])
-        #     sub_count = int(sub_counts[idx])
-        #     sub_percentage = (sub_count / subcluster_size) * 100
-        #     print(f"    サブクラスタ {sub_cluster_id}: {sub_count} 個, クラスタ {cluster_id} 内の {sub_percentage:.2f}%")
+        sub_model = KMedoids(n_clusters=sub_n_clusters, metric="precomputed", init='k-medoids++', random_state=42)
+        print(f"  -> サブクラスタリング (クラスタ数 {sub_n_clusters}) を実行中...")
+        sub_model.fit(sub_distance_matrix)
 
-        # sub_output_path = processed_dir / f'concession_model_cluster{cluster_id}.pkl'
-        # joblib.dump({
-        #     'model': sub_model,
-        #     'cluster_indices': cluster_indices,
-        #     'labels': sub_labels,
-        # }, sub_output_path)
-        # print(f"  -> サブクラスタリング結果を {sub_output_path} に保存")
+        if cluster_id == 0:
+            print("\n--- ▼▼▼ クラスタ0のインデックス対応関係の確認 ▼▼▼ ---")
+            
+            print(f"クラスタ0を構成する元のシーンインデックス（{len(cluster_indices)}件）:")
+            print(cluster_indices)
+
+            sub_medoid_relative_indices = sub_model.medoid_indices_
+            print(f"\nサブクラスタの代表は、上記リストの {sub_medoid_relative_indices} 番目の要素です。")
+
+            print("これを元のシーンインデックスに直すと...")
+            for rel_idx in sub_medoid_relative_indices:
+                original_scene_index = cluster_indices[rel_idx]
+                print(f"  -> 代表シーンの元のインデックス: {original_scene_index}")
+            
+            print("--- ▲▲▲ 確認終了 ▲▲▲ ---\n")
+
+        if cluster_id == 1:
+            print("\n--- ▼▼▼ クラスタ1のインデックス対応関係の確認 ▼▼▼ ---")
+            
+            print(f"クラスタ1を構成する元のシーンインデックス（{len(cluster_indices)}件）:")
+            print(cluster_indices)
+
+            sub_medoid_relative_indices = sub_model.medoid_indices_
+            print(f"\nサブクラスタの代表は、上記リストの {sub_medoid_relative_indices} 番目の要素です。")
+
+            print("これを元のシーンインデックスに直すと...")
+            for rel_idx in sub_medoid_relative_indices:
+                original_scene_index = cluster_indices[rel_idx]
+                print(f"  -> 代表シーンの元のインデックス: {original_scene_index}")
+            
+            print("--- ▲▲▲ 確認終了 ▲▲▲ ---\n")
+
+        if cluster_id == 2:
+            print("\n--- ▼▼▼ クラスタ2のインデックス対応関係の確認 ▼▼▼ ---")
+            
+            print(f"クラスタ2を構成する元のシーンインデックス（{len(cluster_indices)}件）:")
+            print(cluster_indices)
+
+            sub_medoid_relative_indices = sub_model.medoid_indices_
+            print(f"\nサブクラスタの代表は、上記リストの {sub_medoid_relative_indices} 番目の要素です。")
+
+            print("これを元のシーンインデックスに直すと...")
+            for rel_idx in sub_medoid_relative_indices:
+                original_scene_index = cluster_indices[rel_idx]
+                print(f"  -> 代表シーンの元のインデックス: {original_scene_index}")
+            
+            print("--- ▲▲▲ 確認終了 ▲▲▲ ---\n")
+
+        sub_labels = sub_model.labels_
+        sub_cluster_ids, sub_counts = np.unique(sub_labels, return_counts=True)
+        sub_sorted_indices = np.argsort(-sub_counts)
+        for idx in sub_sorted_indices:
+            sub_cluster_id = int(sub_cluster_ids[idx])
+            sub_count = int(sub_counts[idx])
+            sub_percentage = (sub_count / subcluster_size) * 100
+            print(f"    サブクラスタ {sub_cluster_id}: {sub_count} 個, クラスタ {cluster_id} 内の {sub_percentage:.2f}%")
+
+        processed_dir = Path('/home/arata/rcss/goal-scene-analyzer/data/processed')
+        sub_output_path = processed_dir / f'concession_model_cluster{cluster_id}_ball_x15_falloff_x0p1.pkl'
+        joblib.dump(sub_model, sub_output_path)
+        print(f"  -> サブクラスタリング結果を {sub_output_path} に保存")
 
 if __name__ == "__main__":
     main()
