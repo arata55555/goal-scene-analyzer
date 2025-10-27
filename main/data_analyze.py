@@ -133,8 +133,12 @@ def extract_data(file_path, scenes_l, scenes_r):
 #     return np.stack(padded_scenes, axis=0)
 
 def main():
-    all_data_l = []
-    all_data_r = []
+    all_data_l_r = []
+    all_data_l_l = []
+    all_data_l_c = []
+    all_data_r_r = []
+    all_data_r_l = []
+    all_data_r_c = []
 
     if not os.path.isdir(rcg_folder_path):
         print(f"エラー: 指定されたフォルダが見つかりません: {rcg_folder_path}")
@@ -172,31 +176,84 @@ def main():
         extracted_data_l, extracted_data_r = extract_data(rcg_file_path, scenes_l, scenes_r)
 
         if extracted_data_l:
-            all_data_l.extend(list(extracted_data_l.values()))
-        if extracted_data_r:
-            all_data_r.extend(list(extracted_data_r.values()))
+                for scene_data_list in extracted_data_l.values():
+                    if scene_data_list:
+                        first_valid_y = np.nan
+                        for frame in scene_data_list:
+                            if not np.isnan(frame[1]):
+                                first_valid_y = frame[1]
+                                break
+                        
+                        if np.isnan(first_valid_y):
+                            all_data_l_c.append(scene_data_list)
+                        elif first_valid_y >= 20:
+                            all_data_l_r.append(scene_data_list)
+                        elif first_valid_y <= -20:
+                            all_data_l_l.append(scene_data_list)
+                        else:
+                            all_data_l_c.append(scene_data_list)
 
-        if extracted_data_l:
-            print(f"左チームの{len(extracted_data_l)}個のゴールデータを処理中...")
-            for scene_data_list in extracted_data_l.values():
-                all_data_l.append(scene_data_list)
-
         if extracted_data_r:
-            print(f"右チームの{len(extracted_data_r)}個のゴールデータを処理中...")
             for scene_data_list in extracted_data_r.values():
-                all_data_r.append(scene_data_list)
-    if all_data_l:
-        # scoring_scenes_numpy = padded_data(all_data_l, CYCLES_BEFORE_GOAL)
-        scoring_scenes_numpy = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_l if scene]
-        output_path_l = os.path.join(npz_folder_path, "scoring_scenes.pkl")
-        joblib.dump(scoring_scenes_numpy, output_path_l)
-        print(f"全得点シーン {len(scoring_scenes_numpy)}件を {output_path_l} に保存しました。")
+                if scene_data_list:
+                    first_valid_y = np.nan
+                    for frame in scene_data_list:
+                        if not np.isnan(frame[1]):
+                            first_valid_y = frame[1]
+                            break
 
-    if all_data_r:
+                    if np.isnan(first_valid_y):
+                        all_data_r_c.append(scene_data_list) 
+                    elif first_valid_y >= 20:
+                        all_data_r_r.append(scene_data_list)
+                    elif first_valid_y <= -20:
+                        all_data_r_l.append(scene_data_list)
+                    elif scene_data_list[0][1] <= -20:
+                        all_data_r_r.append(scene_data_list)
+                    else:
+                        all_data_r_c.append(scene_data_list)
+
+    if all_data_l_r:
+        # scoring_scenes_numpy = padded_data(all_data_l, CYCLES_BEFORE_GOAL)
+        scoring_scenes_numpy_r = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_l_r if scene]
+        output_path_l = os.path.join(npz_folder_path, "scoring_scenes_r.pkl")
+        joblib.dump(scoring_scenes_numpy_r, output_path_l)
+        print(f"全右側得点シーン {len(scoring_scenes_numpy_r)}件を {output_path_l} に保存しました。")
+
+    if all_data_l_l:
+        # concession_scenes_numpy = padded_data(all_data_l, CYCLES_BEFORE_GOAL)
+        scoring_scenes_numpy_l = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_l_l if scene]
+        output_path_l = os.path.join(npz_folder_path, "scoring_scenes_l.pkl")
+        joblib.dump(scoring_scenes_numpy_l, output_path_l)
+        print(f"全左側得点シーン {len(scoring_scenes_numpy_l)}件を {output_path_l} に保存しました。")
+
+    if all_data_l_c:
+        # neutral_scenes_numpy = padded_data(all_data_l, CYCLES_BEFORE_GOAL)
+        scoring_scenes_numpy_c = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_l_c if scene]
+        output_path_l = os.path.join(npz_folder_path, "scoring_scenes_c.pkl")
+        joblib.dump(scoring_scenes_numpy_c, output_path_l)
+        print(f"全中央得点シーン {len(scoring_scenes_numpy_c)}件を {output_path_l} に保存しました。")
+
+    if all_data_r_r:
         # concession_scenes_numpy = padded_data(all_data_r, CYCLES_BEFORE_GOAL)
-        concession_scenes_numpy = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_r if scene]
-        output_path_r = os.path.join(npz_folder_path, "concession_scenes.pkl")
-        joblib.dump(concession_scenes_numpy, output_path_r)
-        print(f"全失点シーン {len(concession_scenes_numpy)}件を {output_path_r} に保存しました。")
+        concession_scenes_numpy_r = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_r_r if scene]
+        output_path_r = os.path.join(npz_folder_path, "concession_scenes_r.pkl")
+        joblib.dump(concession_scenes_numpy_r, output_path_r)
+        print(f"全右側失点シーン {len(concession_scenes_numpy_r)}件を {output_path_r} に保存しました。")
+
+    if all_data_r_l:
+        # scoring_scenes_numpy = padded_data(all_data_r, CYCLES_BEFORE_GOAL)
+        concession_scenes_numpy_l = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_r_l if scene]
+        output_path_r = os.path.join(npz_folder_path, "concession_scenes_l.pkl")
+        joblib.dump(concession_scenes_numpy_l, output_path_r)
+        print(f"全左側失点シーン {len(concession_scenes_numpy_l)}件を {output_path_r} に保存しました。")
+
+    if all_data_r_c:
+        # neutral_scenes_numpy = padded_data(all_data_r, CYCLES_BEFORE_GOAL)
+        concession_scenes_numpy_c = [np.nan_to_num(np.array(scene), nan=0.0) for scene in all_data_r_c if scene]
+        output_path_r = os.path.join(npz_folder_path, "concession_scenes_c.pkl")
+        joblib.dump(concession_scenes_numpy_c, output_path_r)
+        print(f"全中央失点シーン {len(concession_scenes_numpy_c)}件を {output_path_r} に保存しました。")
+
 if __name__ == "__main__":
     main()
