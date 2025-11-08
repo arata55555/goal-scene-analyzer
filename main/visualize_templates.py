@@ -5,22 +5,38 @@ import numpy as np
 import os
 
 def main():
-    model = joblib.load('/home/arata/rcss/goal-scene-analyzer/data/processed/scoring_model.pkl')
-    pkl_path = "/home/arata/rcss/goal-scene-analyzer/data/results/concession_scenes.pkl"
+    model = joblib.load('/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-02/klusters_model_scoring_c/scoring_model_c.pkl')
+    pkl_path_2023 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-28/helios2023-cyrus2023/scoring_scenes_c.pkl"
+    pkl_path_2024 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-28/helios2024-cyrus2023/scoring_scenes_c.pkl"
+
     try:
-        all_scenes = joblib.load(pkl_path)
+        sub_scenes_2023 = joblib.load(pkl_path_2023)
+        print(f"2023データを読み込みました.形状: {len(sub_scenes_2023)} ")
     except FileNotFoundError:
-        print(f"ファイルが見つかりません: {pkl_path}")
+        print(f"ファイルが見つかりません: {pkl_path_2023}")
         return
     try:
-        medoid_indices = model.medoid_indices_
-        templates = [all_scenes[i] for i in medoid_indices]
+        sub_scenes_2024 = joblib.load(pkl_path_2024)
+        print(f"2024データを読み込みました.形状: {len(sub_scenes_2024)} ")
+    except FileNotFoundError:
+        print(f"ファイルが見つかりません: {pkl_path_2024}")
+        return
+    try:
+        all_scenes = sub_scenes_2023 + sub_scenes_2024
+        # all_scenes = sub_scenes_2023
+        print(f"全データを結合しました.形状: {len(all_scenes)} ")
+    except Exception as e:
+        print(f"サブシーンの結合に失敗しました: {e}")
+        return
+    try:
+        templates = model["templates"]
+        medoid_indices = model["medoid_indices"]
         print(f"テンプレート数: {len(templates)}")
     except (AttributeError, FileNotFoundError):
         print("モデルファイルが見つかりません")
         return
-    
-    output_dir = '/home/arata/rcss/goal-scene-analyzer/data/results/templates/'
+
+    output_dir = '/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-02/templates_scoring_c/'
 
     for i, template in enumerate(templates):
         original_index = medoid_indices[i]

@@ -5,11 +5,11 @@ import os
 import gzip
 import joblib
 
-rcg_folder_path = "/home/arata/rcss/goal-scene-analyzer/data/goal-scene-analyzer_test/"
+rcg_folder_path = "/home/arata/rcss/work/autogame/data/goal-scene-analyzer_helios-base_vs_mars/"
 CYCLES_BEFORE_GOAL = 50  
 OUTPUT_FILENAME_L = "final_goal_scenes_data_l.npz"
 OUTPUT_FILENAME_R = "final_goal_scenes_data_r.npz"
-npz_folder_path = "/home/arata/rcss/goal-scene-analyzer/data/results"
+npz_folder_path = "/home/arata/rcss/work/goal-scene-analyzer/results"
 
 def define_scenes(cycle, goal_cycle_l, goal_cycle_r, duration = 50):
     scenes_l = []
