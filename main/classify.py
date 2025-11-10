@@ -5,11 +5,11 @@ import pandas as pd
 from tslearn.metrics import cdist_dtw
 
 #pathはあとで変更
-INPUT_MODEL_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/models/dtw_model.pkl"
-INPUT_PKL_PATH_2023 = "/home/arata/rcss/goal-scene-analyzer/data/processed/concession_scenes.pkl"
-INPUT_PKL_PATH_2024 = "/home/arata/rcss/goal-scene-analyzer/data/processed/concession_scenes_2024.pkl"
+INPUT_MODEL_PKL_PATH = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-02/klusters_model_scoring_r/scoring_model_r.pkl"
+INPUT_PKL_PATH_2023 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-28/helios2023-cyrus2023/scoring_scenes_r.pkl"
+INPUT_PKL_PATH_2024 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-28/helios2024-cyrus2023/scoring_scenes_r.pkl"
 
-OUTPUT_CSV_PATH = "/home/arata/rcss/goal-scene-analyzer/data/processed/dtw_results/"
+OUTPUT_CSV_PATH = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-02/classify_scoring_r/classification_results.csv"
 
 def assign_scenes_to_templates(scenes_list, templates):
     if not scenes_list:
@@ -45,19 +45,28 @@ def main():
     except Exception as e:
         print(f"エラーが発生しました: {e}")
         return
-    
-    templates = model.cluster_centers_
-    num_templates = len(templates)
-    print(f"テンプレート数: {num_templates}, シーン数: 2023年データ {len(scenes_2023)}, 2024年データ {len(scenes_2024)}")
+
+    bundle = joblib.load(INPUT_MODEL_PKL_PATH)
+    model = bundle["model"]
+    templates = bundle["templates"]
+    medoid_indices = bundle.get("medoid_indices", list(range(len(templates))))
+    print(f"テンプレート数: {len(templates)}, シーン数: 2023年データ {len(scenes_2023)}, 2024年データ {len(scenes_2024)}")
 
     counts_2023 = assign_scenes_to_templates(scenes_2023, templates)
     counts_2024 = assign_scenes_to_templates(scenes_2024, templates)
 
+    if len(medoid_indices) != len(templates):
+        raise ValueError("テンプレート数と medoid_indices の数が一致しません")
+
     results_df = pd.DataFrame({
-        "20223_count": counts_2023,
+        "OriginalSceneIndex": medoid_indices,
+        "2023_count": counts_2023,
         "2024_count": counts_2024
     })
     results_df.index.name = "Template_ID"
+
+    results_df["2023_percentage"] = (results_df["2023_count"] / len(scenes_2023)) * 100 if len(scenes_2023) > 0 else 0
+    results_df["2024_percentage"] = (results_df["2024_count"] / len(scenes_2024)) * 100 if len(scenes_2024) > 0 else 0
 
     print("結果を表示します:")
     print(results_df)
