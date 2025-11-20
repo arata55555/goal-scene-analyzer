@@ -50,8 +50,8 @@ def main():
         print("ラベル情報が見つかりません")
         labels = None
 
-    output_dir = '/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-16/templates_scoring_r/'
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = '/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-19/templates_weight_30_scoring_r/'
+    os.makedirs(output_dir, exist_ok=True)  
 
     for i, template in enumerate(templates):
         original_index = medoid_indices[i] 
@@ -145,14 +145,18 @@ def visualize_template_heatmap(template_data, cluster_members, output_path):
 
         field_extent = [-x_half, x_half, -y_half, y_half]
 
+        weights = np.ones(len(all_ball_x))/len(all_ball_x)
+
         hb = ax.hexbin(
             all_ball_x,    
             all_ball_y,     
-            gridsize=50,    
+            gridsize=30,    
             extent=field_extent, 
             cmap='inferno', 
-            mincnt=1,       
-            alpha=0.7    
+            mincnt=None,       
+            alpha=0.7,
+            C=weights,
+            reduce_C_function=np.sum
         )
         cb = fig.colorbar(hb, ax=ax)
         cb.set_label('ball position density')
