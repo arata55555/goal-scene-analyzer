@@ -13,9 +13,9 @@ import matplotlib.cm as cm
 def main():
     print("クラスタリング開始")
 
-    pkl_path ="/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-31/dtw_concession_l/dtw_distances_concession_scenes_l.pkl"
-    scenes_path = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-28/helios2023-cyrus2023/concession_scenes_l.pkl"
-    scenes_path_2024 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-28/helios2024-cyrus2023/concession_scenes_r.pkl"
+    pkl_path ="/home/arata/rcss/work/goal-scene-analyzer/data/finish/12-1/dtw_distances_concession_ball_r/dtw_distances_concession_ball_r.pkl"
+    scenes_path = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-30/11-30/concession_scenes_r.pkl"
+    # scenes_path_2024 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-28/helios2024-cyrus2023/concession_scenes_r.pkl"
     try:
         loaded_pkl = joblib.load(pkl_path)
     except FileNotFoundError:
@@ -29,14 +29,14 @@ def main():
         print(f"ファイルが見つかりません: {scenes_path}")
         return
     
-    try:
-        loaded_scenes_2024 = joblib.load(scenes_path_2024)
-        print(f"2024年シーンデータを読み込みました.形状: {len(loaded_scenes_2024)} ")
-    except FileNotFoundError:
-        print(f"ファイルが見つかりません: {scenes_path_2024}")
-        return
-    all_scenes = loaded_scenes + loaded_scenes_2024
-    # all_scenes = loaded_scenes
+    # try:
+    #     loaded_scenes_2024 = joblib.load(scenes_path_2024)
+    #     print(f"2024年シーンデータを読み込みました.形状: {len(loaded_scenes_2024)} ")
+    # except FileNotFoundError:
+    #     print(f"ファイルが見つかりません: {scenes_path_2024}")
+    #     return
+    # all_scenes = loaded_scenes + loaded_scenes_2024
+    all_scenes = loaded_scenes
     print(f"全シーンデータを結合しました.形状: {len(all_scenes)} ")
 
     # all_scenes = loaded_pkl
@@ -100,10 +100,11 @@ def main():
             original_scene_index = cluster_indices[rel_idx]
             print(f"  -> 代表シーンの元のインデックス: {original_scene_index}")
 
-    processed_dir = Path('/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-02/klusters_model_concession_l')
-    model_output_path = processed_dir / 'concession_model_l.pkl'
+    processed_dir = Path('/home/arata/rcss/work/goal-scene-analyzer/data/finish/12-1/klusters_model_concession_ball_r')
+    os.makedirs(processed_dir, exist_ok=True)
+    model_output_path = processed_dir / 'model_concession_ball_r.pkl'
     joblib.dump(
-        {"model": model, "templates": templates, "medoid_indices": medoid_indices},
+        {"model": model, "templates": templates, "medoid_indices": medoid_indices, "labels": labels},
         model_output_path,
     )
     print(f"学習済みモデルを {model_output_path} に保存")
