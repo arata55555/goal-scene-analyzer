@@ -10,8 +10,8 @@ def main():
     モデルとデータを読み込み、クラスタごとに可視化関数を呼び出す。
     """
 
-    model = joblib.load('/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-14/klusters_model_scoring_ball_r/model_scoring_ball_r.pkl')
-    pkl_path_2023 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/goal-scene-analyzer_helios-base_vs_mars/scoring_scenes_r.pkl"
+    model = joblib.load('/home/arata/rcss/work/goal-scene-analyzer/data/finish/12-1/klusters_model_concession_ball_r/model_concession_ball_r.pkl')
+    pkl_path_2023 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-30/11-30/concession_scenes_r.pkl"
     # pkl_path_2024 = "..." # 将来的に2024年データを追加
 
     try:
@@ -50,7 +50,7 @@ def main():
         print("ラベル情報が見つかりません")
         labels = None
 
-    output_dir = '/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-19/templates_weight_30_scoring_r/'
+    output_dir = '/home/arata/rcss/work/goal-scene-analyzer/data/finish/12-1/templates_lambda_40_concession_ball_r/'
     os.makedirs(output_dir, exist_ok=True)  
 
     for i, template in enumerate(templates):
@@ -123,10 +123,15 @@ def visualize_template_heatmap(template_data, cluster_members, output_path):
     center_circle = Circle((0, 0), 9.15, color='white', fill=False, linewidth=2)
     ax.add_patch(center_circle)
 
+    STEP = 0.5
+
     all_ball_x = []
     all_ball_y = []
+    all_scene_ids = []
+
+    total_scenes = len(cluster_members)
     
-    for scene_data in cluster_members:
+    for i, scene_data in enumerate(cluster_members):
         try:
             n_timesteps = scene_data.shape[0]
             
@@ -134,9 +139,31 @@ def visualize_template_heatmap(template_data, cluster_members, output_path):
             
             ball_x = reshaped_scene[:, 0, 0] 
             ball_y = reshaped_scene[:, 0, 1] 
-            
-            all_ball_x.extend(ball_x)
-            all_ball_y.extend(ball_y)
+
+            scene_x = []
+            scene_y = []
+
+            scene_x.append(ball_x[0])
+            scene_y.append(ball_y[0])
+
+            for t in range(1, len(ball_x)):
+                start_x, start_y = ball_x[t-1], ball_y[t-1]
+                end_x, end_y = ball_x[t], ball_y[t]
+
+                dist = np.sqrt((end_x - start_x)**2 + (end_y - start_y)**2)
+
+                if dist > 0:
+                    num_steps = int(np.ceil(dist / STEP))
+                    interp_x = np.linspace(start_x, end_x, num=num_steps+1, endpoint=False)[1:]
+                    interp_y = np.linspace(start_y, end_y, num=num_steps+1, endpoint=False)[1:]
+
+                    scene_x.extend(interp_x)
+                    scene_y.extend(interp_y)
+            all_ball_x.extend(scene_x)
+            all_ball_y.extend(scene_y)
+
+            ids = [i] * len(scene_x)
+            all_scene_ids.extend(ids)
         except Exception as e:
             print(f"クラスターメンバーの処理中にエラーが発生しました: {e}")
             continue 
@@ -150,13 +177,13 @@ def visualize_template_heatmap(template_data, cluster_members, output_path):
         hb = ax.hexbin(
             all_ball_x,    
             all_ball_y,     
-            gridsize=30,    
+            gridsize=40,    
             extent=field_extent, 
             cmap='inferno', 
             mincnt=None,       
             alpha=0.7,
-            C=weights,
-            reduce_C_function=np.sum
+            C=all_scene_ids,
+            reduce_C_function=lambda x: len(set(x)) / total_scenes
         )
         cb = fig.colorbar(hb, ax=ax)
         cb.set_label('ball position density')
