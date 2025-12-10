@@ -5,9 +5,9 @@ import numpy as np
 import os
 
 def main():
-    model = joblib.load('/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-14/klusters_model_concession_ball_l/model_concession_ball_l.pkl')
-    pkl_path_2023 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/goal-scene-analyzer_helios-base_vs_mars/concession_scenes_l.pkl"
-    # pkl_path_2024 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-28/helios2024-cyrus2023/scoring_scenes_r.pkl"
+    model = joblib.load('/home/arata/rcss/work/goal-scene-analyzer/data/finish/12-1/klusters_model_concession_ball_r/model_concession_ball_r.pkl')
+    pkl_path_2023 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-30/11-30/concession_scenes_r.pkl"
+    # pkl_path_2024 = "/home/arata/rcss/work/goal-scene-analyzer/data/finish/10-28/helios2024-cyrus2023/concession_scenes_r.pkl"
 
     try:
         sub_scenes_2023 = joblib.load(pkl_path_2023)
@@ -43,7 +43,7 @@ def main():
         print("ラベル情報が見つかりません")
         labels = None
 
-    output_dir = '/home/arata/rcss/work/goal-scene-analyzer/data/finish/11-14/templates_concession_l/'
+    output_dir = '/home/arata/rcss/work/goal-scene-analyzer/data/finish/12-1/templates_concession_ball_r/' 
     os.makedirs(output_dir, exist_ok=True)
 
     for i, template in enumerate(templates):
@@ -150,6 +150,8 @@ def visualize_template(template_data, cluster_members, output_path):
     ax.set_title(os.path.basename(output_path))
     ax.set_xlim(-55, 55)
     ax.set_ylim(-35, 35)    
+
+    ax.invert_yaxis()
 
     plt.savefig(output_path)
     plt.close(fig) 

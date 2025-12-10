@@ -194,6 +194,8 @@ def visualize_template_heatmap(template_data, cluster_members, output_path):
     ax.set_xlim(-55, 55)
     ax.set_ylim(-35, 35) 
 
+    ax.invert_yaxis()
+
     plt.savefig(output_path)
     plt.close(fig) 
     print(f"テンプレートを {output_path} に保存しました")
