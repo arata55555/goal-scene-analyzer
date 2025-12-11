@@ -12,7 +12,7 @@ DIM = 46
 
 def build_scale_vector(scenes, ball_weights, falloff_rates):
     weighted_scenes = []
-    base_player_weight = 1.0
+    base_player_weight = 0
     for s in scenes:
         s_w = np.zeros_like(s, dtype=float)
         for i, frame in enumerate(s):
@@ -39,47 +39,54 @@ def build_scale_vector(scenes, ball_weights, falloff_rates):
 
 def main():
     print("DTWの計算を開始します")
-    try:
-        sub_scenes = joblib.load(INPUT_PKL_PATH)
-        print(f"データを読み込みました.形状: {len(sub_scenes)} ")
-    except FileNotFoundError:
-        print(f"ファイルが見つかりません: {INPUT_PKL_PATH}")
-        return
-    try:
-        sub_scenes_2024 = joblib.load(INPUT_PKL_PATH_2024)
-        print(f"2024データを読み込みました.形状: {len(sub_scenes_2024)} ")
-    except FileNotFoundError:
-        print(f"ファイルが見つかりません: {INPUT_PKL_PATH_2024}")
-        return
-    
-    all_scenes = sub_scenes + sub_scenes_2024
+    list_string = ["concession", "scoring"]
+    list_string2 = ["scenes_l", "scenes_r", "scenes_c"]
+    for ls in list_string:
+        for ls2 in list_string2:
+            INPUT_PKL_PATH = f"/home/arata/rcss/work/goal-scene-analyzer/data/finish/12-10/data_analyze_heliosbase_itandroids_1/{ls}_{ls2}.pkl"
+            # INPUT_PKL_PATH_2024 = f"/home/arata/rcss/goal-scene-analyzer/data/finish/2024-06/{ls}_{ls2}_2024.pkl"
+            print(f"現在処理中のデータ: {ls}_{ls2}")
+            try:
+                sub_scenes = joblib.load(INPUT_PKL_PATH)
+                print(f"データを読み込みました.形状: {len(sub_scenes)} ")
+            except FileNotFoundError:
+                print(f"ファイルが見つかりません: {INPUT_PKL_PATH}")
+                return
+            # try:
+            #     sub_scenes_2024 = joblib.load(INPUT_PKL_PATH_2024)
+            #     print(f"2024データを読み込みました.形状: {len(sub_scenes_2024)} ")
+            # except FileNotFoundError:
+            #     print(f"ファイルが見つかりません: {INPUT_PKL_PATH_2024}")
+            #     return
+            
+            all_scenes = sub_scenes # + sub_scenes_2024
 
-    if not all_scenes:
-        print("シーンデータが空です。処理を終了します。")
-        return
-    
-    print(f"総シーン数: {len(all_scenes)}")
-    
-    X = [np.nan_to_num(np.asarray(s, float), nan=0.0) for s in all_scenes]
+            if not all_scenes:
+                print("シーンデータが空です。処理を終了します。")
+                return
+            
+            print(f"総シーン数: {len(all_scenes)}")
+            
+            X = [np.nan_to_num(np.asarray(s, float), nan=0.0) for s in all_scenes]
 
-    ball_weights = [15.0, 16.0, 17.0, 18.0, 19.0, 20.0]
-    falloff_rates = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+            ball_weights = [1.0]
+            falloff_rates = [0]
 
-    for bl in ball_weights:
-        for fr in falloff_rates:
-            print(f"現在のパラメータ: ボール重み倍率 = {bl}, プレイヤーの重み = {fr}")
-            Xw = build_scale_vector(X, bl, fr)
-            med_len = int(np.median([s.shape[0] for s in Xw]))
-            radius = max(1, int(0.10 * med_len))
+            for bl in ball_weights:
+                for fr in falloff_rates:
+                    print(f"現在のパラメータ: ボール重み倍率 = {bl}, プレイヤーの重み = {fr}")
+                    Xw = build_scale_vector(X, bl, fr)
+                    med_len = int(np.median([s.shape[0] for s in Xw]))
+                    radius = max(1, int(0.10 * med_len))
 
-            dtw_distances = cdist_dtw(Xw, n_jobs=-1, global_constraint="sakoe_chiba", sakoe_chiba_radius=radius, verbose=True)
-            print("DTW距離行列を計算しました")
-            step_tag = f"{fr:.1f}".replace(".", "p")
-            output_filename = f"dtw_distances_concession_ball_x{int(bl)}_falloff_x{step_tag}.pkl"
-            output_path = os.path.join(OUTPUT_PKL_PATH, output_filename)
+                    dtw_distances = cdist_dtw(Xw, n_jobs=-1, global_constraint="sakoe_chiba", sakoe_chiba_radius=radius, verbose=True)
+                    print("DTW距離行列を計算しました")
+                    step_tag = f"{fr:.1f}".replace(".", "p")
+                    output_filename = f"dtw_distances_concession_ball_x{int(bl)}_falloff_x{step_tag}.pkl"
+                    output_path = os.path.join(OUTPUT_PKL_PATH, output_filename)
 
-            joblib.dump(dtw_distances, output_path)
-            print(f"DTW距離行列を保存しました: {output_path}")
+                    joblib.dump(dtw_distances, output_path)
+                    print(f"DTW距離行列を保存しました: {output_path}")
 
 if __name__ == "__main__":
     main()
