@@ -3,9 +3,6 @@ import joblib
 from tslearn.metrics import cdist_dtw
 import os
 
-
-INPUT_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/data/finish/09-26/concession_scenes.pkl"
-INPUT_PKL_PATH_2024 = "/home/arata/rcss/goal-scene-analyzer/data/finish/2024-06/concession_scenes_2024.pkl"
 OUTPUT_PKL_PATH = "/home/arata/rcss/goal-scene-analyzer/data/processed/"
 
 DIM = 46
